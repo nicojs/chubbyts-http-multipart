@@ -8,7 +8,7 @@ import type { Middleware } from '@chubbyts/chubbyts-http-types/dist/middleware';
 import type { ServerRequest, Response } from '@chubbyts/chubbyts-http-types/dist/message';
 import type { Handler } from '@chubbyts/chubbyts-http-types/dist/handler';
 
-export const createMultipartMiddleware = (): Middleware => {
+export const createMultipartMiddleware = (limits: busboy.Limits | undefined = undefined): Middleware => {
   return async (request: ServerRequest, handler: Handler): Promise<Response> => {
     const headers: IncomingHttpHeaders = Object.fromEntries(
       Object.entries(request.headers).map(([name, value]) => [name, value.join()]),
@@ -25,7 +25,7 @@ export const createMultipartMiddleware = (): Middleware => {
 
       const newBody = new PassThrough();
 
-      const multipartStream = busboy({ headers });
+      const multipartStream = busboy({ headers, limits });
 
       multipartStream.on('file', (name, file, info) => {
         const { filename, mimeType } = info;

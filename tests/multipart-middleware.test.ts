@@ -88,73 +88,127 @@ describe('createMultipartMiddleware', () => {
     expect(handlerMocks.length).toBe(0);
   });
 
-  test('with multipart/form-data', async () => {
-    const requestBody = new PassThrough();
+  describe('with multipart/form-data', () => {
+    test('successful', async () => {
+      const requestBody = new PassThrough();
 
-    const formData = createFormData();
+      const formData = createFormData();
 
-    formData.pipe(requestBody);
+      formData.pipe(requestBody);
 
-    const request = {
-      headers: { 'content-type': [`multipart/form-data; boundary=${formData.getBoundary()}`] },
-      body: requestBody,
-    } as unknown as ServerRequest;
+      const request = {
+        headers: { 'content-type': [`multipart/form-data; boundary=${formData.getBoundary()}`] },
+        body: requestBody,
+      } as unknown as ServerRequest;
 
-    const response = {} as Response;
+      const response = {} as Response;
 
-    const [handler, handlerMocks] = useFunctionMock<Handler>([
-      {
-        callback: async (givenRequest: ServerRequest) => {
-          expect(givenRequest.headers['content-type'][0]).toBe('application/x-www-form-urlencoded');
+      const [handler, handlerMocks] = useFunctionMock<Handler>([
+        {
+          callback: async (givenRequest: ServerRequest) => {
+            expect(givenRequest.headers['content-type'][0]).toBe('application/x-www-form-urlencoded');
 
-          const data = parse(await getStream(givenRequest.body));
+            const data = parse(await getStream(givenRequest.body));
 
-          expect(data).toEqual({
-            id: '123e4567-e89b-12d3-a456-426655440000',
-            name: 'John Doe',
-            address: '{\n  "street": "3, Garden St",\n  "city": "Hillsbery, UT"\n}',
-            red: expect.stringMatching(
-              /^\/tmp\/multipart\/[0-9a-f]{128}\/red.png; filename=red.png; mimeType=image\/png$/,
-            ),
-            green: expect.stringMatching(
-              /^\/tmp\/multipart\/[0-9a-f]{128}\/green.png; filename=green.png; mimeType=image\/png$/,
-            ),
-            blue: expect.stringMatching(
-              /^\/tmp\/multipart\/[0-9a-f]{128}\/blue.png; filename=blue.png; mimeType=image\/png$/,
-            ),
-          });
-
-          expect(
-            sha1(
-              readFileSync((data['red'] as string).match(/(\/tmp\/multipart\/[0-9a-f]{128}\/red.png)/)?.[0] as string),
-            ),
-          ).toBe(sha1(readFileSync(redImagePath)));
-
-          expect(
-            sha1(
-              readFileSync(
-                (data['green'] as string).match(/(\/tmp\/multipart\/[0-9a-f]{128}\/green.png)/)?.[0] as string,
+            expect(data).toEqual({
+              id: '123e4567-e89b-12d3-a456-426655440000',
+              name: 'John Doe',
+              address: '{\n  "street": "3, Garden St",\n  "city": "Hillsbery, UT"\n}',
+              red: expect.stringMatching(
+                /^\/tmp\/multipart\/[0-9a-f]{128}\/red.png; filename=red.png; mimeType=image\/png$/,
               ),
-            ),
-          ).toBe(sha1(readFileSync(greenImagePath)));
-
-          expect(
-            sha1(
-              readFileSync(
-                (data['blue'] as string).match(/(\/tmp\/multipart\/[0-9a-f]{128}\/blue.png)/)?.[0] as string,
+              green: expect.stringMatching(
+                /^\/tmp\/multipart\/[0-9a-f]{128}\/green.png; filename=green.png; mimeType=image\/png$/,
               ),
-            ),
-          ).toBe(sha1(readFileSync(blueImagePath)));
+              blue: expect.stringMatching(
+                /^\/tmp\/multipart\/[0-9a-f]{128}\/blue.png; filename=blue.png; mimeType=image\/png$/,
+              ),
+            });
 
-          return response;
+            expect(
+              sha1(
+                readFileSync(
+                  (data['red'] as string).match(/(\/tmp\/multipart\/[0-9a-f]{128}\/red.png)/)?.[0] as string,
+                ),
+              ),
+            ).toBe(sha1(readFileSync(redImagePath)));
+
+            expect(
+              sha1(
+                readFileSync(
+                  (data['green'] as string).match(/(\/tmp\/multipart\/[0-9a-f]{128}\/green.png)/)?.[0] as string,
+                ),
+              ),
+            ).toBe(sha1(readFileSync(greenImagePath)));
+
+            expect(
+              sha1(
+                readFileSync(
+                  (data['blue'] as string).match(/(\/tmp\/multipart\/[0-9a-f]{128}\/blue.png)/)?.[0] as string,
+                ),
+              ),
+            ).toBe(sha1(readFileSync(blueImagePath)));
+
+            return response;
+          },
         },
-      },
-    ]);
+      ]);
 
-    const multipartMiddleware = createMultipartMiddleware();
+      const multipartMiddleware = createMultipartMiddleware();
 
-    expect(await multipartMiddleware(request, handler)).toBe(response);
+      expect(await multipartMiddleware(request, handler)).toBe(response);
 
-    expect(handlerMocks.length).toBe(0);
+      expect(handlerMocks.length).toBe(0);
+    });
+
+    test('allow only 1 file', async () => {
+      const requestBody = new PassThrough();
+
+      const formData = createFormData();
+
+      formData.pipe(requestBody);
+
+      const request = {
+        headers: { 'content-type': [`multipart/form-data; boundary=${formData.getBoundary()}`] },
+        body: requestBody,
+      } as unknown as ServerRequest;
+
+      const response = {} as Response;
+
+      const [handler, handlerMocks] = useFunctionMock<Handler>([
+        {
+          callback: async (givenRequest: ServerRequest) => {
+            expect(givenRequest.headers['content-type'][0]).toBe('application/x-www-form-urlencoded');
+
+            const data = parse(await getStream(givenRequest.body));
+
+            expect(data).toEqual({
+              id: '123e4567-e89b-12d3-a456-426655440000',
+              name: 'John Doe',
+              address: '{\n  "street": "3, Garden St",\n  "city": "Hillsbery, UT"\n}',
+              red: expect.stringMatching(
+                /^\/tmp\/multipart\/[0-9a-f]{128}\/red.png; filename=red.png; mimeType=image\/png$/,
+              ),
+            });
+
+            expect(
+              sha1(
+                readFileSync(
+                  (data['red'] as string).match(/(\/tmp\/multipart\/[0-9a-f]{128}\/red.png)/)?.[0] as string,
+                ),
+              ),
+            ).toBe(sha1(readFileSync(redImagePath)));
+
+            return response;
+          },
+        },
+      ]);
+
+      const multipartMiddleware = createMultipartMiddleware({ files: 1 });
+
+      expect(await multipartMiddleware(request, handler)).toBe(response);
+
+      expect(handlerMocks.length).toBe(0);
+    });
   });
 });
