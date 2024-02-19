@@ -53,6 +53,59 @@ const multipartMiddleware = createMultipartMiddleware();
 const response = await multipartMiddleware(request, handler);
 ```
 
+### Example
+
+#### Input
+
+```
+----------------------------394107496171408467161617
+Content-Disposition: form-data; name="id"
+
+123e4567-e89b-12d3-a456-426655440000
+----------------------------394107496171408467161617
+Content-Disposition: form-data; name="name"
+
+John Doe
+----------------------------394107496171408467161617
+Content-Disposition: form-data; name="address"
+Content-Type: application/json
+
+{
+  "street": "3, Garden St",
+  "city": "Hillsbery, UT"
+}
+----------------------------394107496171408467161617
+Content-Disposition: form-data; name="red"; filename="red.png"
+Content-Type: image/png
+
+<binary>
+----------------------------394107496171408467161617
+Content-Disposition: form-data; name="green"; filename="green.png"
+Content-Type: image/png
+
+<binary>
+----------------------------394107496171408467161617
+Content-Disposition: form-data; name="blue"; filename="blue.png"
+Content-Type: image/png
+
+<binary>
+----------------------------394107496171408467161617--
+```
+
+#### Output
+
+*Optimized for human readability*
+
+```
+id=123e4567-e89b-12d3-a456-426655440000&
+name=John Doe&
+address={\n  "street": "3, Garden St",\n  "city": "Hillsbery, UT"\n}&
+red=/tmp/multipart/.../red.png; filename=red.png; mimeType=image/png&
+green=/tmp/multipart/.../green.png; filename=green.png; mimeType=image/png&
+blue=/tmp/multipart/.../blue.png; filename=blue.png; mimeType=image/png&
+```
+
+
 ## Copyright
 
 2024 Dominik Zogg
