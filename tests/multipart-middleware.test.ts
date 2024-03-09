@@ -1,6 +1,7 @@
 import type { Stream } from 'stream';
 import { PassThrough } from 'stream';
-import { createReadStream, readFileSync } from 'fs';
+import { createReadStream, readFileSync, promises as fs } from 'fs';
+import { tmpdir } from 'os';
 import { createHash } from 'crypto';
 import { describe, expect, test } from '@jest/globals';
 import { useFunctionMock } from '@chubbyts/chubbyts-function-mock/dist/function-mock';
@@ -50,6 +51,10 @@ const getStream = async (stream: Stream): Promise<string> => {
     stream.on('error', (error) => reject(error));
   });
 };
+
+beforeEach(async () => {
+  await fs.rm(`${tmpdir()}/multipart`, { force: true, recursive: true });
+});
 
 describe('createMultipartMiddleware', () => {
   test('without content-type', async () => {
