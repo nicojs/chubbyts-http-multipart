@@ -21,7 +21,7 @@ export const createMultipartMiddleware = (limits: busboy.Limits | undefined = un
     const body = await new Promise<PassThrough>((resolve) => {
       const temporaryPath = `${tmpdir()}/multipart/${randomBytes(64).toString('hex')}`;
 
-      mkdirSync(temporaryPath, { recursive: true });
+      mkdirSync(temporaryPath);
 
       const newBody = new PassThrough();
 
